@@ -1,0 +1,44 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0}
+body{width:1080px;height:1080px;background:linear-gradient(135deg,#0f2a4a,#1b4b7a);font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#fff;padding:52px 56px;display:flex;flex-direction:column}
+.tag{align-self:flex-start;background:#f2c811;color:#222;font-weight:700;font-size:16px;letter-spacing:.08em;padding:6px 14px;border-radius:20px}
+h1{font-size:50px;line-height:1.1;margin:18px 0 10px;font-weight:700}
+.sub{font-size:23px;color:#bcd3ea;line-height:1.3}
+.pane{margin-top:26px;background:#fff;border-radius:12px;padding:16px 20px;color:#333;box-shadow:0 8px 24px #0005;display:flex;align-items:center;gap:28px}
+.hd{font-size:16px;font-weight:600;color:#555;width:150px}
+.lay{flex:1}.lay small{font-size:14px;color:#666;display:block;margin-bottom:6px}
+.sl{display:flex;align-items:center;gap:10px;font-size:15px}
+.sl .box{border:1px solid #ccc;border-radius:4px;padding:3px 8px}
+.sl .bar{flex:1;height:4px;background:#ddd;border-radius:2px;position:relative}
+.sl .bar i{position:absolute;left:0;top:-5px;width:14px;height:14px;border-radius:50%;background:#117865}
+.hl{flex:1.1;border:3px solid #e53935;border-radius:6px;padding:8px 10px}
+.hl b{font-size:14px;font-weight:500;color:#555}
+.dd{margin-top:5px;border:1px solid #ccc;border-radius:4px;padding:7px 10px;display:flex;justify-content:space-between;font-size:17px;color:#222}
+.chart{margin-top:18px;background:#fff;border-radius:12px;padding:16px 20px 12px;color:#333;box-shadow:0 8px 24px #0005}
+.ct{font-size:19px;font-weight:600}.cs{font-size:14px;color:#777}
+.foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end}
+.foot img{height:104px}
+.note{font-size:15px;color:#bcd3ea}
+</style></head><body>
+<span class="tag">POWER BI · SEPTEMBER 2026</span>
+<h1>Pick where your chart starts: Initial scroll position</h1>
+<div class="sub">Long time axis? Open on the latest data (End) instead of scrolling every time.</div>
+<div class="pane">
+ <div class="hd">⌄ X-axis › Layout</div>
+ <div class="lay"><small>Minimum category width</small><div class="sl"><span class="box">20 px</span><span class="bar"><i></i></span></div></div>
+ <div class="hl"><b>Initial scroll position</b><div class="dd"><span>End</span><span>⌄</span></div></div>
+</div>
+<div class="chart">
+ <div class="ct">Sum of Sales</div><div class="cs">by Month Year</div>
+ <svg width="100%" height="415" viewBox="0 0 640 290">
+  <g stroke="#eee"><line x1="50" x2="630" y1="25" y2="25"/><line x1="50" x2="630" y1="100" y2="100"/><line x1="50" x2="630" y1="175" y2="175"/></g>
+  <g font-size="12" fill="#888"><text x="8" y="29">10M</text><text x="14" y="104">5M</text><text x="14" y="179">0M</text></g>
+  <path transform="translate(0,-15) scale(1,1.25)" vector-effect="non-scaling-stroke" d="M60 100 C85 125 100 120 125 105 S165 95 190 110 S225 80 250 95 S290 120 315 112 S345 70 370 85 S405 112 430 108 S470 60 500 40 S525 125 550 118 S590 45 620 38" fill="none" stroke="#3b82f6" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="620" cy="35" r="5" fill="#3b82f6"/>
+  <g font-size="11" fill="#777"><text transform="translate(66,258) rotate(-90)">Nov 2025</text><text transform="translate(130,258) rotate(-90)">Jan 2026</text><text transform="translate(194,258) rotate(-90)">Mar 2026</text><text transform="translate(258,258) rotate(-90)">May 2026</text><text transform="translate(322,258) rotate(-90)">Jul 2026</text><text transform="translate(386,258) rotate(-90)">Sep 2026</text><text transform="translate(450,258) rotate(-90)">Nov 2026</text></g>
+  <rect x="50" y="270" width="580" height="8" rx="4" fill="#eee"/><rect x="250" y="270" width="380" height="8" rx="4" fill="#8a8a8a"/>
+ </svg>
+ <div class="cs" style="text-align:right">Scrollbar opens at the end ➜ latest months visible</div>
+</div>
+<div class="foot"><img src="datatale-logo.png"><span class="note">Illustrative recreation · sample data</span></div>
+</body></html>
