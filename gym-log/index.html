@@ -114,9 +114,10 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
   function fresh() {
     var t = new Date(), iso = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'), logs = [];
     START.forEach(function (s, i) {
-      logs.push({ id: 'start' + i + 'b', date: iso, pid: 'b', ex: s[0], sets: [{ w: s[1], r: null }] });
-      logs.push({ id: 'start' + i + 'a', date: iso, pid: 'a', ex: s[0], sets: [{ w: s[2], r: null }] });
+      logs.push({ id: 'start' + i + 'b', date: iso, pid: 'b', ex: s[0], sets: [{ w: s[1], r: 10 }] });
+      logs.push({ id: 'start' + i + 'a', date: iso, pid: 'a', ex: s[0], sets: [{ w: s[2], r: 10 }] });
     });
+    [['Leg Extension Up', 40], ['Leg Extension Down', 60], ['Dumbbell Curl', 3], ['Dumbbell Up', 2]].forEach(function (s, i) { logs.push({ id: 'son' + i, date: iso, pid: 'b', ex: s[0], sets: [{ w: s[1], r: 10 }] }); });
     return { people: [{ id: 'a', name: 'Me' }, { id: 'b', name: 'Son' }], unit: 'kg', logs: logs };
   }
   function load() {
@@ -124,6 +125,18 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
     return fresh();
   }
   var S = load();
+  // Son-only starting weights, added once for phones that already saved the first version.
+  var SON_ONLY = [['Leg Extension Up', 40], ['Leg Extension Down', 60], ['Dumbbell Curl', 3], ['Dumbbell Up', 2]];
+  (function migrate() {
+    var changed = false, iso = S.logs.length ? S.logs.filter(function (l) { return String(l.id).indexOf('start') === 0; }).map(function (l) { return l.date; })[0] : null;
+    if (!iso) { var t = new Date(); iso = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'); }
+    S.logs.forEach(function (l) { if (String(l.id).indexOf('start') === 0 || String(l.id).indexOf('son') === 0) l.sets.forEach(function (x) { if (!x.r) { x.r = 10; changed = true; } }); });
+    if (!S.logs.some(function (l) { return String(l.id).indexOf('son') === 0; }) && S.logs.some(function (l) { return String(l.id).indexOf('start') === 0; })) {
+      SON_ONLY.forEach(function (s, i) { S.logs.push({ id: 'son' + i, date: iso, pid: 'b', ex: s[0], sets: [{ w: s[1], r: 10 }] }); });
+      changed = true;
+    }
+    if (changed) { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  })();
   var store_ok = true;
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { store_ok = false; } }
 
@@ -137,7 +150,7 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
 
   var ui = {
     tab: 'log', pid: S.people[0].id, armed: null,
-    draft: { date: todayISO(), ex: '', sets: [{ w: '', r: '3' }, { w: '', r: '3' }, { w: '', r: '3' }] },
+    draft: { date: todayISO(), ex: '', sets: [{ w: '', r: '10' }, { w: '', r: '10' }, { w: '', r: '10' }] },
     progEx: '', metric: 'top', restoreArmed: false
   };
 
@@ -344,8 +357,8 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
     var a = b.dataset.act, d = ui.draft;
     if (a === 'tab') { ui.tab = b.dataset.tab; ui.armed = null; ui.restoreArmed = false; }
     else if (a === 'person') { ui.pid = b.dataset.id; ui.armed = null; }
-    else if (a === 'addset') { var last = d.sets[d.sets.length - 1] || { w: '', r: '3' }; d.sets.push({ w: last.w, r: last.r }); }
-    else if (a === 'rmset') { d.sets.splice(+b.dataset.i, 1); if (!d.sets.length) d.sets.push({ w: '', r: '3' }); }
+    else if (a === 'addset') { var last = d.sets[d.sets.length - 1] || { w: '', r: '10' }; d.sets.push({ w: last.w, r: last.r }); }
+    else if (a === 'rmset') { d.sets.splice(+b.dataset.i, 1); if (!d.sets.length) d.sets.push({ w: '', r: '10' }); }
     else if (a === 'uselast') { var l = lastFor(ui.pid, d.ex); if (l) d.sets = l.sets.map(function (s) { return { w: String(s.w), r: s.r ? String(s.r) : '' }; }); }
     else if (a === 'save') {
       var ex = canonEx(d.ex), sets = d.sets.map(function (s) { var r = parseInt(s.r, 10); return { w: parseFloat(String(s.w).replace(',', '.')), r: r > 0 ? r : null }; }).filter(function (s) { return isFinite(s.w) && s.w >= 0; });
@@ -353,7 +366,7 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
       var ex_l = null;
       S.logs.forEach(function (x) { if (x.pid === ui.pid && x.date === d.date && x.ex === ex) ex_l = x; });
       if (ex_l) ex_l.sets = ex_l.sets.concat(sets); else S.logs.push({ id: uid(), date: d.date, pid: ui.pid, ex: ex, sets: sets });
-      save(); d.ex = ''; d.sets = [{ w: '', r: '3' }, { w: '', r: '3' }, { w: '', r: '3' }];
+      save(); d.ex = ''; d.sets = [{ w: '', r: '10' }, { w: '', r: '10' }, { w: '', r: '10' }];
       toast(store_ok ? 'Saved' : 'Saved, but this browser blocked storage');
     }
     else if (a === 'del') { if (ui.armed === b.dataset.id) { S.logs = S.logs.filter(function (x) { return x.id !== b.dataset.id; }); ui.armed = null; save(); } else ui.armed = b.dataset.id; }
