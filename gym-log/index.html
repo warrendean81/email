@@ -137,7 +137,7 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
 
   var ui = {
     tab: 'log', pid: S.people[0].id, armed: null,
-    draft: { date: todayISO(), ex: '', sets: [{ w: '', r: '' }, { w: '', r: '' }, { w: '', r: '' }] },
+    draft: { date: todayISO(), ex: '', sets: [{ w: '', r: '3' }, { w: '', r: '3' }, { w: '', r: '3' }] },
     progEx: '', metric: 'top', restoreArmed: false
   };
 
@@ -344,8 +344,8 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
     var a = b.dataset.act, d = ui.draft;
     if (a === 'tab') { ui.tab = b.dataset.tab; ui.armed = null; ui.restoreArmed = false; }
     else if (a === 'person') { ui.pid = b.dataset.id; ui.armed = null; }
-    else if (a === 'addset') { var last = d.sets[d.sets.length - 1] || { w: '', r: '' }; d.sets.push({ w: last.w, r: last.r }); }
-    else if (a === 'rmset') { d.sets.splice(+b.dataset.i, 1); if (!d.sets.length) d.sets.push({ w: '', r: '' }); }
+    else if (a === 'addset') { var last = d.sets[d.sets.length - 1] || { w: '', r: '3' }; d.sets.push({ w: last.w, r: last.r }); }
+    else if (a === 'rmset') { d.sets.splice(+b.dataset.i, 1); if (!d.sets.length) d.sets.push({ w: '', r: '3' }); }
     else if (a === 'uselast') { var l = lastFor(ui.pid, d.ex); if (l) d.sets = l.sets.map(function (s) { return { w: String(s.w), r: s.r ? String(s.r) : '' }; }); }
     else if (a === 'save') {
       var ex = canonEx(d.ex), sets = d.sets.map(function (s) { var r = parseInt(s.r, 10); return { w: parseFloat(String(s.w).replace(',', '.')), r: r > 0 ? r : null }; }).filter(function (s) { return isFinite(s.w) && s.w >= 0; });
@@ -353,7 +353,7 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
       var ex_l = null;
       S.logs.forEach(function (x) { if (x.pid === ui.pid && x.date === d.date && x.ex === ex) ex_l = x; });
       if (ex_l) ex_l.sets = ex_l.sets.concat(sets); else S.logs.push({ id: uid(), date: d.date, pid: ui.pid, ex: ex, sets: sets });
-      save(); d.ex = ''; d.sets = [{ w: '', r: '' }, { w: '', r: '' }, { w: '', r: '' }];
+      save(); d.ex = ''; d.sets = [{ w: '', r: '3' }, { w: '', r: '3' }, { w: '', r: '3' }];
       toast(store_ok ? 'Saved' : 'Saved, but this browser blocked storage');
     }
     else if (a === 'del') { if (ui.armed === b.dataset.id) { S.logs = S.logs.filter(function (x) { return x.id !== b.dataset.id; }); ui.armed = null; save(); } else ui.armed = b.dataset.id; }
