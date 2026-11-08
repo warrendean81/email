@@ -1,0 +1,401 @@
+<title>Gym Log</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: one narrow phone column, content on top, fixed bottom tab bar (thumb reach).
+   Palette comes from Olympic plate colours: blue = person 1, yellow = person 2. */
+:root {
+  --bg: #eceff0;
+  --surface: #ffffff;
+  --fg: #14191c;
+  --muted: #5a676d;
+  --line: #d3dadd;
+  --p1: #1d5fd6;
+  --p2: #c98a00;
+  --on-p1: #ffffff;
+  --on-p2: #1a1300;
+  --bad: #c4332a;
+  --good: #167a4c;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1315; --surface: #182024; --fg: #eef2f3; --muted: #93a1a7; --line: #2b363b;
+    --p1: #5b9bff; --p2: #f0b429; --on-p1: #07101f; --on-p2: #1a1300; --bad: #ff7a6e; --good: #4fd193;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1315; --surface: #182024; --fg: #eef2f3; --muted: #93a1a7; --line: #2b363b;
+  --p1: #5b9bff; --p2: #f0b429; --on-p1: #07101f; --on-p2: #1a1300; --bad: #ff7a6e; --good: #4fd193;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.4;
+  padding-block: 12px 96px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+#app { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; margin: 0; letter-spacing: .02em; text-wrap: balance; }
+h1 { font-size: 30px; text-transform: uppercase; }
+h2 { font-size: 22px; text-transform: uppercase; }
+h3 { font-size: 18px; }
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.date-line { color: var(--muted); font-size: 14px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+.seg button { font: 700 20px var(--display); letter-spacing: .03em; text-transform: uppercase; border: 0; border-radius: 9px; padding: 11px 8px; background: transparent; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seg button[aria-pressed="true"].pc0 { background: var(--p1); color: var(--on-p1); }
+.seg button[aria-pressed="true"].pc1 { background: var(--p2); color: var(--on-p2); }
+.seg.small button { font-size: 16px; padding: 8px; }
+.seg.small button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+label, .lbl { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.field { display: flex; flex-direction: column; gap: 6px; }
+input, select, textarea { font: 500 18px var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px; width: 100%; min-height: 48px; min-width: 0; }
+textarea { font-size: 13px; min-height: 110px; font-family: ui-monospace, Menlo, monospace; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 3px solid var(--p1); outline-offset: 2px; }
+.hint { font-size: 14px; color: var(--muted); display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.hint:empty { display: none; }
+.sets { display: flex; flex-direction: column; gap: 8px; }
+.set { display: grid; grid-template-columns: 2.4rem 1fr 1fr 44px; gap: 8px; align-items: center; }
+.set .n { font: 700 20px var(--display); color: var(--muted); }
+.set input { font-size: 22px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
+.set .cols { font-size: 12px; }
+.colhead { display: grid; grid-template-columns: 2.4rem 1fr 1fr 44px; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-align: center; }
+.btn { font: 700 19px var(--display); letter-spacing: .04em; text-transform: uppercase; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 12px 16px; min-height: 48px; }
+.btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.btn.link { border: 0; background: transparent; color: var(--p1); padding: 6px 4px; min-height: 0; font-size: 16px; }
+.btn.danger { color: var(--bad); border-color: var(--bad); }
+.btn.x { padding: 0; width: 44px; min-height: 44px; font-size: 22px; color: var(--muted); }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > .btn { flex: 1 1 auto; }
+.entry { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding-block: 10px; border-top: 1px solid var(--line); }
+.entry:first-of-type { border-top: 0; padding-top: 0; }
+.entry .name { font-weight: 600; }
+.entry .sets-txt { color: var(--muted); font-size: 15px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.entry > div:first-child { min-width: 0; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.dot.pc0 { background: var(--p1); } .dot.pc1 { background: var(--p2); }
+.day { font: 700 16px var(--display); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 4px; }
+.stat { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: baseline; }
+.stat .big { font: 700 34px var(--display); font-variant-numeric: tabular-nums; line-height: 1; }
+.stat .big small { font-size: 16px; color: var(--muted); font-weight: 600; }
+.stat .sub { grid-column: 1 / -1; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.up { color: var(--good); font-weight: 600; } .down { color: var(--bad); font-weight: 600; }
+.legend { display: flex; gap: 16px; font-size: 14px; flex-wrap: wrap; }
+svg.chart { width: 100%; height: auto; display: block; }
+svg.chart text { fill: var(--muted); font: 500 10px var(--body); }
+svg.chart .grid { stroke: var(--line); stroke-width: 1; }
+.empty { color: var(--muted); text-align: left; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.empty p { margin: 0; max-width: 46ch; }
+nav { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 6px max(10px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)); z-index: 5; }
+nav button { font: 700 17px var(--display); letter-spacing: .06em; text-transform: uppercase; border: 0; background: transparent; color: var(--muted); padding: 12px 4px; border-radius: 10px; min-height: 48px; }
+nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-shadow: inset 0 -3px 0 var(--fg); }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 600; font-size: 15px; z-index: 6; max-width: calc(100% - 32px); text-align: center; }
+@media (prefers-reduced-motion: no-preference) { #toast { transition: opacity .2s; } }
+</style>
+
+<div id="app"></div>
+<div id="toast" hidden role="status"></div>
+
+<script>
+(function () {
+  var KEY = 'gymlog.v1';
+  var DEFAULT_EX = ['Leg Press','Chest Press Machine','Lat Pulldown','Seated Row','Shoulder Press Machine','Leg Extension','Leg Curl','Bicep Curl','Triceps Pushdown','Pec Deck','Smith Machine Squat','Cable Fly'];
+
+  // Starting weights: [exercise, son, me]. Reps were not given, so they are left blank.
+  var START = [['Leg Press', 80, 140], ['Machine Bicep Curl', 0, 40], ['Seated Row', 60, 100], ['Lat Pulldown', 40, 100], ['Shoulder Press', 3, 60], ['Pull Up', 75, 90]];
+  function fresh() {
+    var t = new Date(), iso = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'), logs = [];
+    START.forEach(function (s, i) {
+      logs.push({ id: 'start' + i + 'b', date: iso, pid: 'b', ex: s[0], sets: [{ w: s[1], r: null }] });
+      logs.push({ id: 'start' + i + 'a', date: iso, pid: 'a', ex: s[0], sets: [{ w: s[2], r: null }] });
+    });
+    return { people: [{ id: 'a', name: 'Me' }, { id: 'b', name: 'Son' }], unit: 'kg', logs: logs };
+  }
+  function load() {
+    try { var j = JSON.parse(localStorage.getItem(KEY)); if (j && Array.isArray(j.logs) && Array.isArray(j.people) && j.people.length === 2) return j; } catch (e) {}
+    return fresh();
+  }
+  var S = load();
+  var store_ok = true;
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { store_ok = false; } }
+
+  function todayISO() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function dt(iso) { var p = iso.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function fmtLong(iso) { return dt(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); }
+  function fmtShort(iso) { return dt(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+  function num(n) { return Number.isInteger(n) ? String(n) : String(Math.round(n * 10) / 10); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  var ui = {
+    tab: 'log', pid: S.people[0].id, armed: null,
+    draft: { date: todayISO(), ex: '', sets: [{ w: '', r: '' }, { w: '', r: '' }, { w: '', r: '' }] },
+    progEx: '', metric: 'top', restoreArmed: false
+  };
+
+  function pidx(id) { return S.people[0].id === id ? 0 : 1; }
+  function person(id) { return S.people[pidx(id)]; }
+  function setsText(sets) { return sets.map(function (s) { return s.r ? num(s.w) + '×' + s.r : num(s.w); }).join('  ·  '); }
+  function canonEx(name) {
+    var t = name.trim().replace(/\s+/g, ' '), l = t.toLowerCase();
+    var all = allExercises();
+    for (var i = 0; i < all.length; i++) if (all[i].toLowerCase() === l) return all[i];
+    return t;
+  }
+  function allExercises() {
+    var seen = {}, out = [];
+    S.logs.forEach(function (l) { if (!seen[l.ex]) { seen[l.ex] = 1; out.push(l.ex); } });
+    DEFAULT_EX.forEach(function (e) { if (!seen[e]) { seen[e] = 1; out.push(e); } });
+    return out;
+  }
+  function lastFor(pid, ex) {
+    var l = ex.trim().toLowerCase(), best = null;
+    S.logs.forEach(function (x) { if (x.pid === pid && x.ex.toLowerCase() === l && (!best || x.date >= best.date)) best = x; });
+    return best;
+  }
+  function sessions(pid, ex, metric) {
+    var by = {};
+    S.logs.forEach(function (l) {
+      if (l.pid !== pid || l.ex !== ex) return;
+      var v = metric === 'top' ? Math.max.apply(null, l.sets.map(function (s) { return s.w; })) : l.sets.reduce(function (a, s) { return a + s.w * (s.r || 0); }, 0);
+      by[l.date] = metric === 'top' ? Math.max(by[l.date] || 0, v) : (by[l.date] || 0) + v;
+    });
+    return Object.keys(by).sort().map(function (d) { return { d: d, v: by[d] }; });
+  }
+
+  /* ---------- views ---------- */
+  function header() {
+    return '<div class="top"><h1>Gym Log</h1><span class="date-line">' + esc(fmtLong(todayISO())) + '</span></div>' +
+      '<div class="seg" role="group" aria-label="Who is training">' +
+      S.people.map(function (p, i) { return '<button class="pc' + i + '" data-act="person" data-id="' + p.id + '" aria-pressed="' + (ui.pid === p.id) + '">' + esc(p.name) + '</button>'; }).join('') + '</div>';
+  }
+  function nav() {
+    var tabs = [['log', 'Log'], ['progress', 'Progress'], ['history', 'History'], ['setup', 'Setup']];
+    return '<nav aria-label="Sections">' + tabs.map(function (t) { return '<button data-act="tab" data-tab="' + t[0] + '"' + (ui.tab === t[0] ? ' aria-current="page"' : '') + '>' + t[1] + '</button>'; }).join('') + '</nav>';
+  }
+  function delBtn(id) {
+    var armed = ui.armed === id;
+    return '<button class="btn link' + (armed ? ' danger' : '') + '" style="' + (armed ? 'color:var(--bad)' : 'color:var(--muted)') + '" data-act="del" data-id="' + id + '">' + (armed ? 'Tap to confirm' : 'Delete') + '</button>';
+  }
+  function entryHTML(l, showPerson, showDate) {
+    var i = pidx(l.pid);
+    return '<div class="entry"><div>' +
+      '<div class="name">' + (showPerson ? '<span class="dot pc' + i + '"></span>' + esc(person(l.pid).name) + ' · ' : '') + esc(l.ex) + (showDate ? ' <span class="date-line">' + esc(fmtShort(l.date)) + '</span>' : '') + '</div>' +
+      '<div class="sets-txt">' + esc(setsText(l.sets)) + ' <span>' + esc(S.unit) + '</span></div></div>' + delBtn(l.id) + '</div>';
+  }
+
+  function logView() {
+    var d = ui.draft;
+    var rows = d.sets.map(function (s, i) {
+      return '<div class="set"><span class="n">' + (i + 1) + '</span>' +
+        '<input id="w' + i + '" inputmode="decimal" aria-label="Set ' + (i + 1) + ' weight" placeholder="0" data-i="' + i + '" data-k="w" value="' + esc(s.w) + '">' +
+        '<input id="r' + i + '" inputmode="numeric" aria-label="Set ' + (i + 1) + ' reps" placeholder="0" data-i="' + i + '" data-k="r" value="' + esc(s.r) + '">' +
+        '<button class="btn x" data-act="rmset" data-i="' + i + '" aria-label="Remove set ' + (i + 1) + '">×</button></div>';
+    }).join('');
+    var todays = S.logs.filter(function (l) { return l.pid === ui.pid && l.date === d.date; });
+    return '<section class="card">' +
+      '<div class="field"><label for="f-date">Date</label><input type="date" id="f-date" value="' + esc(d.date) + '"></div>' +
+      '<div class="field"><label for="f-ex">Exercise or machine</label><input id="f-ex" list="exlist" autocomplete="off" placeholder="e.g. Leg press" value="' + esc(d.ex) + '">' +
+      '<datalist id="exlist">' + allExercises().map(function (e) { return '<option value="' + esc(e) + '">'; }).join('') + '</datalist></div>' +
+      '<div class="hint" id="hint">' + hintHTML() + '</div>' +
+      '<div class="sets"><div class="colhead"><span>Set</span><span>Weight (' + esc(S.unit) + ')</span><span>Reps (optional)</span><span></span></div>' + rows + '</div>' +
+      '<div class="row"><button class="btn" data-act="addset">+ Add set</button><button class="btn primary" data-act="save">Save ' + esc(person(ui.pid).name) + '\'s sets</button></div>' +
+      '</section>' +
+      '<section class="card"><h2>' + esc(person(ui.pid).name) + ' · ' + esc(fmtLong(d.date)) + '</h2>' +
+      (todays.length ? todays.map(function (l) { return entryHTML(l, false, false); }).join('') : '<div class="date-line">Nothing logged for this day yet.</div>') + '</section>';
+  }
+  function hintHTML() {
+    if (!ui.draft.ex.trim()) return '';
+    var l = lastFor(ui.pid, ui.draft.ex);
+    if (!l) return 'First time logging this one for ' + esc(person(ui.pid).name) + '.';
+    return '<span>Last time (' + esc(fmtShort(l.date)) + '): ' + esc(setsText(l.sets)) + ' ' + esc(S.unit) + '</span><button class="btn link" data-act="uselast">Use these</button>';
+  }
+
+  function niceStep(raw) {
+    var p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+  }
+  function chart(ex, metric) {
+    var W = 360, H = 210, L = 42, R = 14, T = 14, B = 28;
+    var series = S.people.map(function (p, i) { return { i: i, pts: sessions(p.id, ex, metric) }; });
+    var pts = [].concat(series[0].pts, series[1].pts);
+    if (!pts.length) return '';
+    var times = pts.map(function (p) { return dt(p.d).getTime(); });
+    var x0 = Math.min.apply(null, times), x1 = Math.max.apply(null, times), DAY = 86400000;
+    if (x0 === x1) { x0 -= 3 * DAY; x1 += 3 * DAY; }
+    var vals = pts.map(function (p) { return p.v; });
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    if (hi === lo) { hi = lo + (lo * 0.1 || 5); }
+    var step = niceStep((hi - lo) / 3), y0 = Math.floor(lo / step) * step, y1 = Math.ceil(hi / step) * step;
+    if (y0 === y1) y1 = y0 + step;
+    function X(t) { return L + (t - x0) / (x1 - x0) * (W - L - R); }
+    function Y(v) { return T + (1 - (v - y0) / (y1 - y0)) * (H - T - B); }
+    var g = '';
+    for (var v = y0; v <= y1 + step / 2; v += step) {
+      g += '<line class="grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '"/>' +
+        '<text x="' + (L - 6) + '" y="' + (Y(v) + 3.5) + '" text-anchor="end">' + (metric === 'vol' && v >= 1000 ? Math.round(v / 100) / 10 + 'k' : num(v)) + '</text>';
+    }
+    var xl = [[x0, 'start'], [(x0 + x1) / 2, 'middle'], [x1, 'end']].map(function (a) {
+      var d = new Date(a[0]); return '<text x="' + X(a[0]) + '" y="' + (H - 8) + '" text-anchor="' + a[1] + '">' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '</text>';
+    }).join('');
+    var lines = series.map(function (s) {
+      if (!s.pts.length) return '';
+      var col = 'var(--p' + (s.i + 1) + ')';
+      var poly = s.pts.map(function (p) { return X(dt(p.d).getTime()).toFixed(1) + ',' + Y(p.v).toFixed(1); }).join(' ');
+      var dots = s.pts.map(function (p, k) { return '<circle cx="' + X(dt(p.d).getTime()).toFixed(1) + '" cy="' + Y(p.v).toFixed(1) + '" r="' + (k === s.pts.length - 1 ? 5 : 3) + '" fill="' + col + '"/>'; }).join('');
+      return '<polyline points="' + poly + '" fill="none" stroke="' + col + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' + dots;
+    }).join('');
+    return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(ex) + ' progress over time">' + g + xl + lines + '</svg>';
+  }
+  function statHTML(p, i, ex, metric) {
+    var pts = sessions(p.id, ex, metric), head = '<div class="lbl"><span class="dot pc' + i + '"></span>' + esc(p.name) + '</div>';
+    if (!pts.length) return '<div class="stat">' + head + '<span></span><div class="sub">No sessions yet for this exercise.</div></div>';
+    var first = pts[0].v, last = pts[pts.length - 1].v, best = Math.max.apply(null, pts.map(function (x) { return x.v; }));
+    var diff = last - first, pct = first ? Math.round(diff / first * 100) : 0;
+    var u = metric === 'top' ? S.unit : S.unit + ' total';
+    var cls = diff > 0 ? 'up' : diff < 0 ? 'down' : '';
+    return '<div class="stat">' + head + '<div class="big">' + (metric === 'vol' ? Math.round(last).toLocaleString() : num(last)) + ' <small>' + esc(u) + '</small></div>' +
+      '<div class="sub">Started ' + (metric === 'vol' ? Math.round(first).toLocaleString() : num(first)) + ' · Best ' + (metric === 'vol' ? Math.round(best).toLocaleString() : num(best)) + ' · <span class="' + cls + '">' +
+      (diff > 0 ? '+' : '') + (metric === 'vol' ? Math.round(diff).toLocaleString() : num(diff)) + (first ? ' (' + (diff > 0 ? '+' : '') + pct + '%)' : '') + '</span> over ' + pts.length + ' session' + (pts.length === 1 ? '' : 's') + '</div></div>';
+  }
+  function progressView() {
+    var count = {};
+    S.logs.forEach(function (l) { count[l.ex] = (count[l.ex] || 0) + 1; });
+    var exs = Object.keys(count).sort(function (a, b) { return count[b] - count[a] || a.localeCompare(b); });
+    if (!exs.length) {
+      return '<section class="card empty"><h2>No sessions yet</h2><p>Log a few workouts and this page will chart how your weights climb over time, for both of you on the same graph.</p>' +
+        '<button class="btn" data-act="sample">Preview with sample data</button></section>';
+    }
+    if (exs.indexOf(ui.progEx) < 0) ui.progEx = exs[0];
+    return '<section class="card">' +
+      '<div class="field"><label for="p-ex">Exercise</label><select id="p-ex">' + exs.map(function (e) { return '<option' + (e === ui.progEx ? ' selected' : '') + ' value="' + esc(e) + '">' + esc(e) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="seg small" role="group" aria-label="Measure"><button data-act="metric" data-m="top" aria-pressed="' + (ui.metric === 'top') + '">Top weight</button><button data-act="metric" data-m="vol" aria-pressed="' + (ui.metric === 'vol') + '">Total lifted</button></div>' +
+      chart(ui.progEx, ui.metric) +
+      '<div class="legend">' + S.people.map(function (p, i) { return '<span><span class="dot pc' + i + '"></span>' + esc(p.name) + '</span>'; }).join('') + '</div>' +
+      '</section><section class="card">' + S.people.map(function (p, i) { return statHTML(p, i, ui.progEx, ui.metric); }).join('') + '</section>';
+  }
+
+  function historyView() {
+    var logs = S.logs.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+    if (!logs.length) return '<section class="card empty"><h2>History</h2><p>Every session you save shows up here, newest first.</p></section>';
+    var out = '', cur = '';
+    logs.forEach(function (l) {
+      if (l.date !== cur) { cur = l.date; out += '</section><section class="card"><div class="day">' + esc(fmtLong(cur)) + '</div>'; }
+      out += entryHTML(l, true, false);
+    });
+    return out.replace('</section>', '') + '</section>';
+  }
+
+  function setupView() {
+    var hasDemo = S.logs.some(function (l) { return String(l.id).indexOf('demo') === 0; });
+    return '<section class="card"><h2>Names</h2>' +
+      S.people.map(function (p, i) { return '<div class="field"><label for="n' + i + '"><span class="dot pc' + i + '"></span>Person ' + (i + 1) + '</label><input id="n' + i + '" data-name="' + i + '" value="' + esc(p.name) + '" maxlength="20"></div>'; }).join('') +
+      '<div class="lbl">Weight unit</div><div class="seg small" role="group" aria-label="Weight unit"><button data-act="unit" data-u="lb" aria-pressed="' + (S.unit === 'lb') + '">Pounds</button><button data-act="unit" data-u="kg" aria-pressed="' + (S.unit === 'kg') + '">Kilograms</button></div>' +
+      '<div class="date-line">Changing the unit only changes the label. Saved numbers are not converted.</div></section>' +
+      '<section class="card"><h2>Backup</h2>' +
+      '<div class="date-line">Your log lives in this phone\'s browser. Copy a backup now and then, and paste it somewhere safe such as a note to yourself.</div>' +
+      '<textarea id="backup" readonly aria-label="Backup text">' + esc(JSON.stringify(S)) + '</textarea>' +
+      '<button class="btn" data-act="copy">Copy backup</button>' +
+      '<div class="field"><label for="restore">Restore from a backup</label><textarea id="restore" placeholder="Paste a backup here"></textarea></div>' +
+      '<button class="btn' + (ui.restoreArmed ? ' danger' : '') + '" data-act="restore">' + (ui.restoreArmed ? 'Tap again to replace everything' : 'Restore backup') + '</button>' +
+      (hasDemo ? '<button class="btn" data-act="rmdemo">Remove sample data</button>' : '') + '</section>';
+  }
+
+  function render() {
+    var v = ui.tab === 'log' ? logView() : ui.tab === 'progress' ? progressView() : ui.tab === 'history' ? historyView() : setupView();
+    document.getElementById('app').innerHTML = header() + v + nav();
+  }
+
+  /* ---------- actions ---------- */
+  var toastT;
+  function toast(msg) {
+    var t = document.getElementById('toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 2400);
+  }
+  function sample() {
+    var base = new Date(); base.setDate(base.getDate() - 7 * 9);
+    var plan = [
+      ['Leg Press', [100, 5], [60, 5]], ['Chest Press Machine', [60, 5], [30, 2.5]], ['Lat Pulldown', [70, 5], [50, 2.5]]
+    ];
+    for (var w = 0; w < 9; w++) {
+      var d = new Date(base); d.setDate(d.getDate() + w * 7);
+      var iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      plan.forEach(function (p, k) {
+        [0, 1].forEach(function (pi) {
+          var start = p[pi + 1][0], inc = p[pi + 1][1], bump = (w + (pi && k === 1 ? -1 : 0)) % 3 === 2 ? 0 : 1;
+          var top = start + inc * Math.floor((w + k) * 0.7 * (pi ? 1.2 : 1)) * bump + (bump ? 0 : 0);
+          S.logs.push({ id: 'demo' + uid(), date: iso, pid: S.people[pi].id, ex: p[0], sets: [{ w: top - inc, r: 10 }, { w: top, r: 8 }, { w: top, r: 8 }] });
+        });
+      });
+    }
+    save();
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]'); if (!b) return;
+    var a = b.dataset.act, d = ui.draft;
+    if (a === 'tab') { ui.tab = b.dataset.tab; ui.armed = null; ui.restoreArmed = false; }
+    else if (a === 'person') { ui.pid = b.dataset.id; ui.armed = null; }
+    else if (a === 'addset') { var last = d.sets[d.sets.length - 1] || { w: '', r: '' }; d.sets.push({ w: last.w, r: last.r }); }
+    else if (a === 'rmset') { d.sets.splice(+b.dataset.i, 1); if (!d.sets.length) d.sets.push({ w: '', r: '' }); }
+    else if (a === 'uselast') { var l = lastFor(ui.pid, d.ex); if (l) d.sets = l.sets.map(function (s) { return { w: String(s.w), r: s.r ? String(s.r) : '' }; }); }
+    else if (a === 'save') {
+      var ex = canonEx(d.ex), sets = d.sets.map(function (s) { var r = parseInt(s.r, 10); return { w: parseFloat(String(s.w).replace(',', '.')), r: r > 0 ? r : null }; }).filter(function (s) { return isFinite(s.w) && s.w >= 0; });
+      if (!ex || !sets.length) { toast('Add an exercise and at least one set with a weight.'); return; }
+      var ex_l = null;
+      S.logs.forEach(function (x) { if (x.pid === ui.pid && x.date === d.date && x.ex === ex) ex_l = x; });
+      if (ex_l) ex_l.sets = ex_l.sets.concat(sets); else S.logs.push({ id: uid(), date: d.date, pid: ui.pid, ex: ex, sets: sets });
+      save(); d.ex = ''; d.sets = [{ w: '', r: '' }, { w: '', r: '' }, { w: '', r: '' }];
+      toast(store_ok ? 'Saved' : 'Saved, but this browser blocked storage');
+    }
+    else if (a === 'del') { if (ui.armed === b.dataset.id) { S.logs = S.logs.filter(function (x) { return x.id !== b.dataset.id; }); ui.armed = null; save(); } else ui.armed = b.dataset.id; }
+    else if (a === 'metric') { ui.metric = b.dataset.m; }
+    else if (a === 'unit') { S.unit = b.dataset.u; save(); }
+    else if (a === 'sample') { sample(); }
+    else if (a === 'rmdemo') { S.logs = S.logs.filter(function (x) { return String(x.id).indexOf('demo') !== 0; }); save(); toast('Sample data removed'); }
+    else if (a === 'copy') {
+      var ta = document.getElementById('backup');
+      var fallback = function () { ta.focus(); ta.select(); toast('Selected. Use Copy from the pop-up menu.'); };
+      try { navigator.clipboard.writeText(ta.value).then(function () { toast('Backup copied'); }, fallback); } catch (err) { fallback(); }
+      return;
+    }
+    else if (a === 'restore') {
+      var txt = document.getElementById('restore').value.trim();
+      if (!txt) { toast('Paste a backup first.'); return; }
+      if (!ui.restoreArmed) { ui.restoreArmed = true; }
+      else {
+        try {
+          var j = JSON.parse(txt);
+          if (!j || !Array.isArray(j.logs) || !Array.isArray(j.people) || j.people.length !== 2) throw 0;
+          S = j; save(); ui.pid = S.people[0].id; ui.restoreArmed = false; toast('Backup restored');
+        } catch (err) { ui.restoreArmed = false; toast('That does not look like a Gym Log backup.'); }
+      }
+    }
+    render();
+  });
+
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.dataset && t.dataset.k) { ui.draft.sets[+t.dataset.i][t.dataset.k] = t.value; }
+    else if (t.id === 'f-ex') { ui.draft.ex = t.value; document.getElementById('hint').innerHTML = hintHTML(); }
+    else if (t.id === 'f-date') { if (t.value) { ui.draft.date = t.value; } }
+  });
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.id === 'f-date' && t.value) { ui.draft.date = t.value; render(); }
+    else if (t.id === 'f-ex') { ui.draft.ex = t.value; document.getElementById('hint').innerHTML = hintHTML(); }
+    else if (t.id === 'p-ex') { ui.progEx = t.value; render(); }
+    else if (t.dataset && t.dataset.name !== undefined) { S.people[+t.dataset.name].name = t.value.trim() || (t.dataset.name === '0' ? 'Me' : 'Son'); save(); render(); }
+  });
+
+  render();
+})();
+</script>
