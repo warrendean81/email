@@ -118,6 +118,7 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
       logs.push({ id: 'start' + i + 'a', date: iso, pid: 'a', ex: s[0], sets: [{ w: s[2], r: 10 }] });
     });
     [['Leg Extension Up', 40], ['Leg Extension Down', 60], ['Dumbbell Curl', 3], ['Dumbbell Up', 2]].forEach(function (s, i) { logs.push({ id: 'son' + i, date: iso, pid: 'b', ex: s[0], sets: [{ w: s[1], r: 10 }] }); });
+    ['Dumbbell Curl', 'Dumbbell Up'].forEach(function (n, i) { logs.push({ id: 'mydb' + i, date: iso, pid: 'a', ex: n, sets: [{ w: 8, r: 10 }] }); });
     return { people: [{ id: 'a', name: 'Me' }, { id: 'b', name: 'Son' }], unit: 'kg', logs: logs };
   }
   function load() {
@@ -133,6 +134,10 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
     S.logs.forEach(function (l) { if (String(l.id).indexOf('start') === 0 || String(l.id).indexOf('son') === 0) l.sets.forEach(function (x) { if (!x.r) { x.r = 10; changed = true; } }); });
     if (!S.logs.some(function (l) { return String(l.id).indexOf('son') === 0; }) && S.logs.some(function (l) { return String(l.id).indexOf('start') === 0; })) {
       SON_ONLY.forEach(function (s, i) { S.logs.push({ id: 'son' + i, date: iso, pid: 'b', ex: s[0], sets: [{ w: s[1], r: 10 }] }); });
+      changed = true;
+    }
+    if (!S.logs.some(function (l) { return String(l.id).indexOf('mydb') === 0; }) && S.logs.some(function (l) { return String(l.id).indexOf('start') === 0; })) {
+      ['Dumbbell Curl', 'Dumbbell Up'].forEach(function (n, i) { S.logs.push({ id: 'mydb' + i, date: iso, pid: 'a', ex: n, sets: [{ w: 8, r: 10 }] }); });
       changed = true;
     }
     if (changed) { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
