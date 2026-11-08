@@ -99,6 +99,15 @@ nav button { font: 700 17px var(--display); letter-spacing: .06em; text-transfor
 nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-shadow: inset 0 -3px 0 var(--fg); }
 #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 600; font-size: 15px; z-index: 6; max-width: calc(100% - 32px); text-align: center; }
 @media (prefers-reduced-motion: no-preference) { #toast { transition: opacity .2s; } }
+
+.xrow { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.xtop { display: flex; gap: 8px; align-items: center; }
+.xtop select { flex: 1; font-weight: 600; }
+.wpair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wpair input { font-size: 26px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; border-top: 4px solid var(--line); }
+.wpair .w-son { border-top-color: var(--p2); }
+.wpair .w-me { border-top-color: var(--p1); }
+.wpair.head span { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-align: center; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 
 <div id="app"></div>
@@ -107,7 +116,7 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
 <script>
 (function () {
   var KEY = 'gymlog.v1';
-  var DEFAULT_EX = ['Leg Press','Chest Press Machine','Lat Pulldown','Seated Row','Shoulder Press Machine','Leg Extension','Leg Curl','Bicep Curl','Triceps Pushdown','Pec Deck','Smith Machine Squat','Cable Fly'];
+  var DEFAULT_EX = [];
 
   // Starting weights: [exercise, son, me]. Reps were not given, so they are left blank.
   var START = [['Leg Press', 80, 140], ['Machine Bicep Curl', 0, 40], ['Seated Row', 60, 100], ['Lat Pulldown', 40, 100], ['Shoulder Press', 3, 60], ['Pull Up', 75, 90]];
@@ -159,8 +168,8 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
   var ui = {
-    tab: 'log', pid: S.people[0].id, armed: null,
-    draft: { date: todayISO(), ex: '', sets: [{ w: '', r: '10' }, { w: '', r: '10' }, { w: '', r: '10' }] },
+    tab: 'log', armed: null,
+    draft: { date: todayISO(), rows: [] },
     progEx: '', metric: 'top', restoreArmed: false
   };
 
@@ -196,9 +205,7 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
 
   /* ---------- views ---------- */
   function header() {
-    return '<div class="top"><h1>Gym Log</h1><span class="date-line">' + esc(fmtLong(todayISO())) + '</span></div>' +
-      '<div class="seg" role="group" aria-label="Who is training">' +
-      S.people.map(function (p, i) { return '<button class="pc' + i + '" data-act="person" data-id="' + p.id + '" aria-pressed="' + (ui.pid === p.id) + '">' + esc(p.name) + '</button>'; }).join('') + '</div>';
+    return '<div class="top"><h1>Gym Log</h1><span class="date-line">' + esc(fmtLong(todayISO())) + '</span></div>';
   }
   function nav() {
     var tabs = [['log', 'Log'], ['progress', 'Progress'], ['history', 'History'], ['setup', 'Setup']];
@@ -215,31 +222,61 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
       '<div class="sets-txt">' + esc(setsText(l.sets)) + ' <span>' + esc(S.unit) + '</span></div></div>' + delBtn(l.id) + '</div>';
   }
 
-  function logView() {
-    var d = ui.draft;
-    var rows = d.sets.map(function (s, i) {
-      return '<div class="set"><span class="n">' + (i + 1) + '</span>' +
-        '<input id="w' + i + '" inputmode="decimal" aria-label="Set ' + (i + 1) + ' weight" placeholder="0" data-i="' + i + '" data-k="w" value="' + esc(s.w) + '">' +
-        '<input id="r' + i + '" inputmode="numeric" aria-label="Set ' + (i + 1) + ' reps" placeholder="0" data-i="' + i + '" data-k="r" value="' + esc(s.r) + '">' +
-        '<button class="btn x" data-act="rmset" data-i="' + i + '" aria-label="Remove set ' + (i + 1) + '">×</button></div>';
-    }).join('');
-    var todays = S.logs.filter(function (l) { return l.pid === ui.pid && l.date === d.date; });
-    return '<section class="card">' +
-      '<div class="field"><label for="f-date">Date</label><input type="date" id="f-date" value="' + esc(d.date) + '"></div>' +
-      '<div class="field"><label for="f-ex">Exercise or machine</label><input id="f-ex" list="exlist" autocomplete="off" placeholder="e.g. Leg press" value="' + esc(d.ex) + '">' +
-      '<datalist id="exlist">' + allExercises().map(function (e) { return '<option value="' + esc(e) + '">'; }).join('') + '</datalist></div>' +
-      '<div class="hint" id="hint">' + hintHTML() + '</div>' +
-      '<div class="sets"><div class="colhead"><span>Set</span><span>Weight (' + esc(S.unit) + ')</span><span>Reps (optional)</span><span></span></div>' + rows + '</div>' +
-      '<div class="row"><button class="btn" data-act="addset">+ Add set</button><button class="btn primary" data-act="save">Save ' + esc(person(ui.pid).name) + '\'s sets</button></div>' +
-      '</section>' +
-      '<section class="card"><h2>' + esc(person(ui.pid).name) + ' · ' + esc(fmtLong(d.date)) + '</h2>' +
-      (todays.length ? todays.map(function (l) { return entryHTML(l, false, false); }).join('') : '<div class="date-line">Nothing logged for this day yet.</div>') + '</section>';
+  var SETS = 3, REPS = 10, OTHER = '__other__';
+  function blankRow() { return { ex: '', other: '', son: '', me: '' }; }
+  function rowEx(r) { return r.ex === OTHER ? r.other : r.ex; }
+  function knownExercises() {
+    var seen = {}, out = [];
+    S.logs.forEach(function (l) { if (!seen[l.ex]) { seen[l.ex] = 1; out.push(l.ex); } });
+    return out;
   }
-  function hintHTML() {
-    if (!ui.draft.ex.trim()) return '';
-    var l = lastFor(ui.pid, ui.draft.ex);
-    if (!l) return 'First time logging this one for ' + esc(person(ui.pid).name) + '.';
-    return '<span>Last time (' + esc(fmtShort(l.date)) + '): ' + esc(setsText(l.sets)) + ' ' + esc(S.unit) + '</span><button class="btn link" data-act="uselast">Use these</button>';
+  function lastWeights(ex) {
+    var o = {}, k = ex.trim().toLowerCase();
+    S.logs.forEach(function (l) {
+      if (l.ex.toLowerCase() !== k) return;
+      var w = Math.max.apply(null, l.sets.map(function (x) { return x.w; }));
+      if (!o[l.pid] || l.date >= o[l.pid].d) o[l.pid] = { d: l.date, w: w };
+    });
+    return o;
+  }
+  function lastSession() {
+    if (!S.logs.length) return [blankRow()];
+    var latest = S.logs.reduce(function (m, l) { return l.date > m ? l.date : m; }, '');
+    var son = S.people[1].id, me = S.people[0].id, rows = [], idx = {};
+    S.logs.forEach(function (l) {
+      if (l.date !== latest) return;
+      if (!(l.ex in idx)) { idx[l.ex] = rows.length; rows.push({ ex: l.ex, other: '', son: '', me: '' }); }
+      var w = String(Math.max.apply(null, l.sets.map(function (x) { return x.w; })));
+      if (l.pid === son) rows[idx[l.ex]].son = w; else if (l.pid === me) rows[idx[l.ex]].me = w;
+    });
+    return rows.length ? rows : [blankRow()];
+  }
+  function logView() {
+    var d = ui.draft, son = S.people[1], me = S.people[0], known = knownExercises();
+    var rows = d.rows.map(function (r, i) {
+      var opts = '<option value=""' + (r.ex ? '' : ' selected') + ' disabled>Choose exercise</option>' +
+        known.map(function (e) { return '<option value="' + esc(e) + '"' + (r.ex === e ? ' selected' : '') + '>' + esc(e) + '</option>'; }).join('') +
+        '<option value="' + OTHER + '"' + (r.ex === OTHER ? ' selected' : '') + '>Other…</option>';
+      var lw = rowEx(r).trim() ? lastWeights(rowEx(r)) : {}, hint = '';
+      if (lw[son.id] || lw[me.id]) hint = 'Last time: ' + esc(son.name) + ' ' + (lw[son.id] ? num(lw[son.id].w) : '–') + ' · ' + esc(me.name) + ' ' + (lw[me.id] ? num(lw[me.id].w) : '–') + ' ' + esc(S.unit);
+      return '<div class="xrow"><div class="xtop"><select id="x' + i + '" data-sel="' + i + '" aria-label="Exercise ' + (i + 1) + '">' + opts + '</select>' +
+        '<button class="btn x" data-act="rmrow" data-i="' + i + '" aria-label="Remove exercise ' + (i + 1) + '">×</button></div>' +
+        (r.ex === OTHER ? '<input id="o' + i + '" data-row="' + i + '" data-k="other" placeholder="New exercise name" autocomplete="off" aria-label="New exercise name" value="' + esc(r.other) + '">' : '') +
+        '<div class="wpair"><input class="w-son" id="s' + i + '" inputmode="decimal" placeholder="' + esc(son.name) + '" aria-label="' + esc(son.name) + ' weight" data-row="' + i + '" data-k="son" value="' + esc(r.son) + '">' +
+        '<input class="w-me" id="m' + i + '" inputmode="decimal" placeholder="' + esc(me.name) + '" aria-label="' + esc(me.name) + ' weight" data-row="' + i + '" data-k="me" value="' + esc(r.me) + '"></div>' +
+        (hint ? '<div class="hint">' + hint + '</div>' : '') + '</div>';
+    }).join('');
+    var saved = S.logs.filter(function (l) { return l.date === d.date; });
+    return '<section class="card">' +
+      '<div class="field"><label for="f-date">Session date</label><input type="date" id="f-date" value="' + esc(d.date) + '"></div>' +
+      '<div class="wpair head"><span><span class="dot pc1"></span>' + esc(son.name) + ' (' + esc(S.unit) + ')</span><span><span class="dot pc0"></span>' + esc(me.name) + ' (' + esc(S.unit) + ')</span></div>' +
+      rows +
+      '<div class="row"><button class="btn" data-act="addrow">+ Add exercise</button><button class="btn" data-act="copylast">Fill from last session</button></div>' +
+      '<button class="btn primary" data-act="save">Save session</button>' +
+      '<div class="date-line">Each exercise is saved as ' + SETS + ' × ' + REPS + ' at the weight you enter. Leave a box empty to skip that person.</div>' +
+      '</section>' +
+      '<section class="card"><h2>Saved for ' + esc(fmtLong(d.date)) + '</h2>' +
+      (saved.length ? saved.map(function (l) { return entryHTML(l, true, false); }).join('') : '<div class="date-line">Nothing saved for this day yet.</div>') + '</section>';
   }
 
   function niceStep(raw) {
@@ -366,18 +403,26 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
     var b = e.target.closest('[data-act]'); if (!b) return;
     var a = b.dataset.act, d = ui.draft;
     if (a === 'tab') { ui.tab = b.dataset.tab; ui.armed = null; ui.restoreArmed = false; }
-    else if (a === 'person') { ui.pid = b.dataset.id; ui.armed = null; }
-    else if (a === 'addset') { var last = d.sets[d.sets.length - 1] || { w: '', r: '10' }; d.sets.push({ w: last.w, r: last.r }); }
-    else if (a === 'rmset') { d.sets.splice(+b.dataset.i, 1); if (!d.sets.length) d.sets.push({ w: '', r: '10' }); }
-    else if (a === 'uselast') { var l = lastFor(ui.pid, d.ex); if (l) d.sets = l.sets.map(function (s) { return { w: String(s.w), r: s.r ? String(s.r) : '' }; }); }
+    else if (a === 'addrow') { d.rows.push(blankRow()); }
+    else if (a === 'rmrow') { d.rows.splice(+b.dataset.i, 1); if (!d.rows.length) d.rows.push(blankRow()); }
+    else if (a === 'copylast') { d.rows = lastSession(); }
     else if (a === 'save') {
-      var ex = canonEx(d.ex), sets = d.sets.map(function (s) { var r = parseInt(s.r, 10); return { w: parseFloat(String(s.w).replace(',', '.')), r: r > 0 ? r : null }; }).filter(function (s) { return isFinite(s.w) && s.w >= 0; });
-      if (!ex || !sets.length) { toast('Add an exercise and at least one set with a weight.'); return; }
-      var ex_l = null;
-      S.logs.forEach(function (x) { if (x.pid === ui.pid && x.date === d.date && x.ex === ex) ex_l = x; });
-      if (ex_l) ex_l.sets = ex_l.sets.concat(sets); else S.logs.push({ id: uid(), date: d.date, pid: ui.pid, ex: ex, sets: sets });
-      save(); d.ex = ''; d.sets = [{ w: '', r: '10' }, { w: '', r: '10' }, { w: '', r: '10' }];
-      toast(store_ok ? 'Saved' : 'Saved, but this browser blocked storage');
+      var count = 0;
+      d.rows.forEach(function (r) {
+        var ex = canonEx(rowEx(r)); if (!ex) return;
+        [[S.people[1].id, r.son], [S.people[0].id, r.me]].forEach(function (pw) {
+          var w = parseFloat(String(pw[1]).replace(',', '.'));
+          if (!isFinite(w) || w < 0) return;
+          var sets = []; for (var k = 0; k < SETS; k++) sets.push({ w: w, r: REPS });
+          var found = null;
+          S.logs.forEach(function (x) { if (x.pid === pw[0] && x.date === d.date && x.ex === ex) found = x; });
+          if (found) found.sets = sets; else S.logs.push({ id: uid(), date: d.date, pid: pw[0], ex: ex, sets: sets });
+          count++;
+        });
+      });
+      if (!count) { toast('Choose an exercise and enter at least one weight.'); return; }
+      save(); d.rows = [blankRow()];
+      toast(store_ok ? 'Session saved' : 'Saved, but this browser blocked storage');
     }
     else if (a === 'del') { if (ui.armed === b.dataset.id) { S.logs = S.logs.filter(function (x) { return x.id !== b.dataset.id; }); ui.armed = null; save(); } else ui.armed = b.dataset.id; }
     else if (a === 'metric') { ui.metric = b.dataset.m; }
@@ -398,7 +443,7 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
         try {
           var j = JSON.parse(txt);
           if (!j || !Array.isArray(j.logs) || !Array.isArray(j.people) || j.people.length !== 2) throw 0;
-          S = j; save(); ui.pid = S.people[0].id; ui.restoreArmed = false; toast('Backup restored');
+          S = j; save(); ui.draft.rows = lastSession(); ui.restoreArmed = false; toast('Backup restored');
         } catch (err) { ui.restoreArmed = false; toast('That does not look like a Gym Log backup.'); }
       }
     }
@@ -407,18 +452,22 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
 
   document.addEventListener('input', function (e) {
     var t = e.target;
-    if (t.dataset && t.dataset.k) { ui.draft.sets[+t.dataset.i][t.dataset.k] = t.value; }
-    else if (t.id === 'f-ex') { ui.draft.ex = t.value; document.getElementById('hint').innerHTML = hintHTML(); }
+    if (t.dataset && t.dataset.k && t.dataset.row !== undefined) { ui.draft.rows[+t.dataset.row][t.dataset.k] = t.value; }
     else if (t.id === 'f-date') { if (t.value) { ui.draft.date = t.value; } }
   });
   document.addEventListener('change', function (e) {
     var t = e.target;
     if (t.id === 'f-date' && t.value) { ui.draft.date = t.value; render(); }
-    else if (t.id === 'f-ex') { ui.draft.ex = t.value; document.getElementById('hint').innerHTML = hintHTML(); }
+    else if (t.dataset && t.dataset.sel !== undefined) {
+      var r = ui.draft.rows[+t.dataset.sel]; r.ex = t.value;
+      if (r.ex && r.ex !== OTHER) { var lw = lastWeights(r.ex); if (r.son === '' && lw[S.people[1].id]) r.son = String(lw[S.people[1].id].w); if (r.me === '' && lw[S.people[0].id]) r.me = String(lw[S.people[0].id].w); }
+      render();
+    }
     else if (t.id === 'p-ex') { ui.progEx = t.value; render(); }
     else if (t.dataset && t.dataset.name !== undefined) { S.people[+t.dataset.name].name = t.value.trim() || (t.dataset.name === '0' ? 'Me' : 'Son'); save(); render(); }
   });
 
+  ui.draft.rows = lastSession();
   render();
 })();
 </script>
