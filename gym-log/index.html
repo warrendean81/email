@@ -119,6 +119,7 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
     });
     [['Leg Extension Up', 40], ['Leg Extension Down', 60], ['Dumbbell Curl', 3], ['Dumbbell Up', 2]].forEach(function (s, i) { logs.push({ id: 'son' + i, date: iso, pid: 'b', ex: s[0], sets: [{ w: s[1], r: 10 }] }); });
     ['Dumbbell Curl', 'Dumbbell Up'].forEach(function (n, i) { logs.push({ id: 'mydb' + i, date: iso, pid: 'a', ex: n, sets: [{ w: 8, r: 10 }] }); });
+    [['Leg Extension Up', 80], ['Leg Extension Down', 100]].forEach(function (x, i) { logs.push({ id: 'myleg' + i, date: iso, pid: 'a', ex: x[0], sets: [{ w: x[1], r: 10 }] }); });
     return { people: [{ id: 'a', name: 'Me' }, { id: 'b', name: 'Son' }], unit: 'kg', logs: logs };
   }
   function load() {
@@ -138,6 +139,10 @@ nav button[aria-current="page"] { color: var(--fg); background: var(--bg); box-s
     }
     if (!S.logs.some(function (l) { return String(l.id).indexOf('mydb') === 0; }) && S.logs.some(function (l) { return String(l.id).indexOf('start') === 0; })) {
       ['Dumbbell Curl', 'Dumbbell Up'].forEach(function (n, i) { S.logs.push({ id: 'mydb' + i, date: iso, pid: 'a', ex: n, sets: [{ w: 8, r: 10 }] }); });
+      changed = true;
+    }
+    if (!S.logs.some(function (l) { return String(l.id).indexOf('myleg') === 0; }) && S.logs.some(function (l) { return String(l.id).indexOf('start') === 0; })) {
+      [['Leg Extension Up', 80], ['Leg Extension Down', 100]].forEach(function (x, i) { S.logs.push({ id: 'myleg' + i, date: iso, pid: 'a', ex: x[0], sets: [{ w: x[1], r: 10 }] }); });
       changed = true;
     }
     if (changed) { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
